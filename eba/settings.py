@@ -125,6 +125,8 @@ STATICFILES_DIRS = [
 
 WEEKLY = os.path.join(BASE_DIR, 'static', 'weekly')
 
+DATA_ROOT = os.path.join(BASE_DIR, 'static', 'data')
+
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = 'media/'
