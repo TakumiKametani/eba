@@ -47,6 +47,11 @@ class Command(BaseCommand):
                     self.header = ['社名', '設立日', '従業員数', '上場区分', 'URL', '平均年齢', '親会社', '子会社', '大学発', '住所', 'タグ', '事業内容']
                     self.order = None
             self.startup()
+        if 'weekly_check' == self.site:
+            if not self.crawling:
+                if 'index' == self.target:
+                    self.header = ['氏名']
+            self.weekly_check()
 
     def startup(self):
         if self.crawling:
@@ -140,6 +145,61 @@ class Command(BaseCommand):
                 self.util.do_write_csv(self.header, self.util.csv_data)
 
 
+    def weekly_check(self):
+        if self.crawling:
+            self.util.access('https://eba-report.xyz/subordinate_leader_list')
+            # OAuth認証があるから、一度止めてログインしてから、続きを流す。
             a = 1
+            for i in [
+                # 幹部
+                20, 75, 126, 81, 99, 66, 84, 113, 207, 335, 244, 278, 262, 374, 261,
+                # リーダー
+                107, 115, 118, 268, 85, 103, 165, 209, 242, 311, 356, 366, 480,
+                220, 228, 184, 282, 290, 406, 500, 450, 454, 351, 410, 481, 534, 91,
+                43, 61, 65, 90, 123, 127, 130, 140, 173, 187, 189,
+                218, 236, 249, 251, 253, 260,
+                264, 285, 319, 409, 499,
+                # 研修担当
+                316, 653
+            ]:
+                self.util.counter += 1
+                url = f'https://eba-report.xyz/subordinate_leader_detail?leader_member_no={i}'
+                sleep(1)
+                try:
+                    self.util.access(url)
+                    self.util.save_html()
+                except:
+                    print(url)
+                    continue
+            pass
+        else:
+            csv_data = []
+            for i in range(1, 100):
+                path = os.path.join(self.util.path, f'{i}.html')
+                if not os.path.exists(path):
+                    break
+                soup = self.util.soup_util(path)
+                if i == 1:
+                    headers = soup.find_all('table')[3].find_all('th')
+                    for h in headers:
+                        if h.get_text() not in ['ID', 'メンバー名']:
+                            self.header += [re.sub(r'提出不要|保存のみ|\s|\t|\n', '', h.get_text()) + '未提出', 'OK', 'NG']
+                _bodys = soup.find_all('tbody')
+                name = re.sub(r'（自分）|\s|\t|\n', '', _bodys[0].find('td').get_text())
+                data = []
+                rows = []
+                for tr in _bodys[1].find_all('tr'):
+                    a_text = re.sub(r'\s|\t|\n', '', tr.find('a').get_text())
+                    if name == '亀谷匠' and a_text in ['鈴木雄紀', '栗原なみ', '船木裕矢', '三橋優也', '栗山堅太郎', '品田彩光', '山崎省吾']:
+                        continue
+                    rows += [[re.sub(r'\s|\t|\n|（.+）', '', td.get_text()) for td in tr.find_all('td') if 'OK' in td.get_text() or 'NG' in td.get_text() or '未提出' in td.get_text()]]
+                for i in range(0, len(rows[0])):
+                    data += [[row[i] for row in rows]]
+                result = [name]
+                for d in data:
+                    result += [d.count('未提出'), d.count('OK'), d.count('NG')]
+                csv_data += [result]
+
+            self.util.do_write_csv(self.header, csv_data)
 
 

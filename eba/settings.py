@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crawling.apps.CrawlingConfig'
+    'crawling.apps.CrawlingConfig',
+    'kpi.apps.KpiConfig'
 ]
 
 MIDDLEWARE = [
@@ -126,6 +127,8 @@ STATICFILES_DIRS = [
 WEEKLY = os.path.join(BASE_DIR, 'static', 'weekly')
 
 DATA_ROOT = os.path.join(BASE_DIR, 'static', 'data')
+
+SKILL_SHEET = os.path.join(DATA_ROOT, 'skill_sheet')
 
 MEDIA_URL = '/media/'
 

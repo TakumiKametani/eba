@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help = "Closes the specified poll for voting"
+    help = ""
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -16,6 +16,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         target = options.get('target', '')
+        # CSVを格納したディレクトリから、ファイル一覧を取得
         files = os.listdir(settings.WEEKLY)
         for _file in files:
             name = ''
@@ -52,7 +53,6 @@ class Command(BaseCommand):
                         continue
 
             self.do_write_csv(name + target + '.csv', data)
-            a = 1
 
     def do_write_csv(self, filename, data):
         with open(os.path.join(settings.WEEKLY, filename), 'w', newline='') as f:
