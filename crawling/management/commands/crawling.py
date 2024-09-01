@@ -36,24 +36,94 @@ class Command(BaseCommand):
         self.crawling = options.get('crawling', False)
         self.site = options.get('site', False)
         self.target = options.get('target', False)
+        self.create_header_target()
         util = CrawlingUtils if self.crawling else BeautifulUtils
         self.util = util(self.site, self.target)
         if 'startup' == self.site:
-            if not self.crawling:
-                if 'index' == self.target:
-                    self.header = ['企業名','設立日','従業員数','上場区分','URL','事業内容']
-                    self.order = ['company_start', 'employee', 'part', 'url', 'business_detail']
-                elif 'detail' == self.target:
-                    self.header = ['社名', '設立日', '従業員数', '上場区分', 'URL', '平均年齢', '親会社', '子会社', '大学発', '住所', 'タグ', '事業内容']
-                    self.order = None
             self.startup()
-        if 'weekly_check' == self.site:
+        elif 'mynavi' == self.site:
+            self.mynavi()
+        elif 'tensyoku_ex' == self.site:
+            self.tensyoku_ex()
+        elif 'rikunavi' == self.site:
+            self.rikunavi()
+
+        elif 'weekly_check' == self.site:
             if not self.crawling:
                 if 'index' == self.target:
                     self.header = ['氏名']
             self.weekly_check()
+        if not self.crawling:
+            self.util.do_write_csv(self.header, self.util.csv_data)
+
+    def create_header_target(self):
+        self.header_order = {
+            'startup': {
+                'index': {
+                    'header': ['企業名', '設立日', '従業員数', '上場区分', 'URL', '事業内容'],
+                    'order': ['company_start', 'employee', 'part', 'url', 'business_detail']
+                },
+                'detail': {
+                    'header': ['社名', '設立日', '従業員数', '上場区分', 'URL', '平均年齢', '親会社', '子会社',
+                           '大学発', '住所', 'タグ', '事業内容'],
+                    'order': None
+                },
+            },
+            'mynavi': {
+                'index': {
+                    'header': ['会社名','詳細ページURL', '設立日', '所在地','従業員数','仕事内容'],
+                    'order': ['url', 'corp_start', 'location', 'employee', 'description']
+                },
+                'detail': {
+                    'header': [],
+                    'order': []
+                }
+            },
+            'tensyoku_ex': {
+                'index': {
+                    'header': ['会社名','詳細ページURL', '勤務地', '仕事内容', '応募資格'],
+                    'order': ['url', 'location', 'detail', 'requirements']
+                },
+                'detail': {
+                    'header': [],
+                    'order': []
+                }
+            },
+            'rikunavi': {
+                'index': {
+                    'header': [],
+                    'order': []
+                },
+                'detail': {
+                    'header': [],
+                    'order': []
+                }
+            },
+
+            'sample': {
+                'index': {
+                    'header': [],
+                    'order': []
+                },
+                'detail': {
+                    'header': [],
+                    'order': []
+                }
+            },
+
+        }
+        self.header = self.header_order[self.site].get(self.target, {}).get('header', [])
+        self.order = self.header_order[self.site].get(self.target, {}).get('order', [])
 
     def startup(self):
+        # if not self.crawling:
+        #     if 'index' == self.target:
+        #         self.header = ['企業名', '設立日', '従業員数', '上場区分', 'URL', '事業内容']
+        #         self.order = ['company_start', 'employee', 'part', 'url', 'business_detail']
+        #     elif 'detail' == self.target:
+        #         self.header = ['社名', '設立日', '従業員数', '上場区分', 'URL', '平均年齢', '親会社', '子会社',
+        #                        '大学発', '住所', 'タグ', '事業内容']
+        #         self.order = None
         if self.crawling:
             # アカウントは5日間のみの体験で、ログインはできないのと、インデックスも見れないので、コメントアウト
             # self.util.access('https://startup-db.com/login')
@@ -103,16 +173,15 @@ class Command(BaseCommand):
                         business_detail = re.sub(r'\n|\t|\s', '', tds[4].get_text())
                         part = re.sub(r'\n|\t|\s', '', tds[3].get_text())
                         employee = re.sub(r'\n|\t|\s', '', tds[7].get_text())
-                        if corp_name not in self.util.csv_data:
-                            self.util.csv_data[corp_name] = {
+                        if corp_name not in self.util.data:
+                            self.util.data[corp_name] = {
                                 'url': url,
                                 'company_start': company_start,
                                 'business_detail': business_detail,
                                 'part': part,
                                 'employee': employee
                             }
-                csv_data = [[key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]], v[self.order[4]]] for key, v in self.util.csv_data.items()]
-                self.util.do_write_csv(self.header, csv_data)
+                self.util.csv_data = [[key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]], v[self.order[4]]] for key, v in self.util.data.items()]
             elif 'detail' == self.target:
                 '''
                 ['社名', '設立日', '従業員数', '上場区分', 'URL', '平均年齢', '親会社', '子会社', '大学発', '住所', 'タグ', '事業内容']
@@ -142,8 +211,132 @@ class Command(BaseCommand):
                     part = re.sub(r'\n|\t|\s', '', soup.find('div', class_='CompanyLabel company-labels').get_text())
                     tag = re.sub(r'\n', ' ', soup.find_all('div', class_='row row-wrap')[0].get_text().replace(' ', ''))
                     self.util.csv_data += [[corp_name, start, employee, part, url, ave, parent, child, university, address, tag, description]]
-                self.util.do_write_csv(self.header, self.util.csv_data)
 
+    def mynavi(self):
+        if self.crawling:
+            self.util.access('https://tenshoku.mynavi.jp/shutoken/list/p11+p12+p13+p14/o16+o1G1+o1G225/?ags=0')
+            self.util.counter = 1
+            self.util.save_html()
+            for i in range(1, 10000):
+                self.util.counter += 1
+                try:
+                    self.util.element(selector='//li[@class="pager_item pager_next"]/a', _type=By.XPATH, style='click')
+                    self.util.save_html()
+                except:
+                    print(self.util.counter)
+                    break
+            pass
+        else:
+            url, corp_start, location, employee, description = [''] * 5
+            domain = 'https://tenshoku.mynavi.jp'
+            files = os.listdir(self.util.path)
+            for filename in files:
+                print(filename)
+                soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                corps = soup.find_all('section', class_='recruit')
+                for corp in corps:
+                    title_tag = corp.find('div', class_='recruit_head')
+                    name = re.sub(r'\s|\|.+', '', title_tag.find('p', class_='main_title').get_text())
+                    url = domain + title_tag.find('a').get('href')
+                    _description = corp.find('th', text='仕事内容')
+                    if _description:
+                        description = re.sub(r'\s|\t|\n', '', _description.parent.find('td').get_text())
+                    p_text = corp.find('p', class_='company_data').get_text().replace('企業データ', '').split('／')
+                    if len(p_text) == 2:
+                        if '設立：' in p_text[0]:
+                            corp_start = re.sub(r'設立：', '', p_text[0])
+                            employee = '-'
+                        else:
+                            corp_start = '-'
+                            employee = re.sub(r'従業員数：', '', p_text[0])
+                        location = re.sub(r'本社所在地：|\s|\t|\n', '', p_text[1])
+                    elif len(p_text) == 3:
+                        corp_start = re.sub(r'設立：', '', p_text[0])
+                        employee = re.sub(r'従業員数：', '', p_text[1])
+                        location = re.sub(r'本社所在地：|\s|\t|\n', '', p_text[2])
+                    if name not in self.util.data:
+                        self.util.data[name] = {
+                            'url': url,
+                            'corp_start': corp_start,
+                            'location': location,
+                            'employee': employee,
+                            'description': description,
+                        }
+                    else:
+                        self.util.data[name]['description'] += ' ' + description
+            self.util.csv_data = [[key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]], v[self.order[4]]] for key, v in self.util.data.items()]
+
+    def rikunavi(self):
+        if self.crawling:
+            pass
+        else:
+            pass
+
+    def tensyoku_ex(self):
+        if self.crawling:
+            urls = {
+                'メーカー系(電気・電子・機械系)': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0200&salary_type=&company_name_search=&keyword=',
+                'メーカー系(素材・医薬品他)': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0300&salary_type=&company_name_search=&keyword=',
+                '商社系(電気・電子・機械系)': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0400&salary_type=&company_name_search=&keyword=',
+                '商社系(総合商社・素材・医薬品他)': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0500&salary_type=&company_name_search=&keyword=',
+                '流通・小売系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0600&salary_type=&company_name_search=&keyword=',
+                'サービス系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0700&salary_type=&company_name_search=&keyword=',
+                'コンサルティング・専門サービス系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0800&salary_type=&company_name_search=&keyword=',
+                'メディア・マスコミ系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=0900&salary_type=&company_name_search=&keyword=',
+                '金融・保険系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=1000&salary_type=&company_name_search=&keyword=',
+                '不動産・建設系': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=1100&salary_type=&company_name_search=&keyword=',
+                'その他': 'https://tenshoku-ex.jp/search/detail?area=&large_occupation=&large_industry=1200&salary_type=&company_name_search=&keyword='
+            }
+            self.util.counter = 1
+            for key, url in urls.items():
+                self.util.access(url)
+                self.util.save_html()
+                for i in range(1, 100000):
+                    self.util.counter += 1
+                    try:
+                        self.util.element(selector='//span[@class="next"]/a', _type=By.XPATH, style='click')
+                        self.util.save_html()
+                    except:
+                        print(self.util.counter)
+                        break
+                pass
+        else:
+            # 'url', 'location', 'detail', 'requirements'
+            domain = 'https://tenshoku-ex.jp'
+            files = os.listdir(self.util.path)
+            for filename in files:
+                print(filename)
+                soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                corps = soup.find_all('div', class_='box_job box_job_result')
+                for corp in corps:
+                    name = re.sub(r'\s|\t|\n', '', corp.find('span', class_='box_job_company').get_text())
+                    url = domain + corp.find('a').get('href', 'ERROR')
+                    table = corp.find('table', class_='table_job_data')
+                    tds = table.find_all('td')
+                    detail = re.sub(r'\s|\t|\n', '', tds[0].get_text())
+                    requirements = re.sub(r'\s|\t|\n', '', tds[1].get_text())
+                    location = re.sub(r'\s|\t|\n', '', tds[3].get_text())
+                    if name not in self.util.data:
+                        self.util.data[name] = {
+                            'url': url,
+                            'location': location,
+                            'detail': detail,
+                            'requirements': requirements,
+                        }
+                    else:
+                        self.util.data[name]['detail'] += ' ' + detail
+                        self.util.data[name]['requirements'] += ' ' + requirements
+                self.util.csv_data = [
+                    [key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]]] for
+                    key, v in self.util.data.items()]
+
+
+
+    def sample(self):
+        if self.crawling:
+            pass
+        else:
+            pass
 
     def weekly_check(self):
         if self.crawling:
@@ -173,7 +366,6 @@ class Command(BaseCommand):
                     continue
             pass
         else:
-            csv_data = []
             for i in range(1, 100):
                 path = os.path.join(self.util.path, f'{i}.html')
                 if not os.path.exists(path):
@@ -198,8 +390,7 @@ class Command(BaseCommand):
                 result = [name]
                 for d in data:
                     result += [d.count('未提出'), d.count('OK'), d.count('NG')]
-                csv_data += [result]
+                self.util.csv_data += [result]
 
-            self.util.do_write_csv(self.header, csv_data)
 
 
