@@ -22,7 +22,7 @@ class BeautifulUtils:
         _yyyymmdd = datetime.strftime(datetime.now(), '%Y%m%d')
         filename = f'{self.site}_{self.target}_{_yyyymmdd}.csv'
         path = os.path.join(settings.DATA_ROOT, self.site, filename)
-        with open(path, 'w', encoding='utf-8', newline='') as f:
+        with open(path, 'w', encoding='utf_8_sig', newline='') as f:
             writer = csv.writer(f)
             if header:
                 writer.writerow(header)

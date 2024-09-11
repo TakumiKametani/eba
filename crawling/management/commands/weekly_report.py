@@ -55,7 +55,7 @@ class Command(BaseCommand):
             self.do_write_csv(name + target + '.csv', data)
 
     def do_write_csv(self, filename, data):
-        with open(os.path.join(settings.WEEKLY, filename), 'w', newline='') as f:
+        with open(os.path.join(settings.WEEKLY, filename), 'w', encoding='utf_8_sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(data)
 

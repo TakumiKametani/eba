@@ -18,7 +18,7 @@ class CrawlingUtils:
         self.driver.get(url)
         sleep(5)
 
-    def element(self, selector='', _type='', multi=False, target_num=0, style='get', string=''):
+    def element(self, selector='', _type='xpath', multi=False, target_num=0, style='get', text=''):
         if multi:
             element = self.driver.find_elements(by=_type, value=selector)[target_num]
         else:
@@ -29,7 +29,11 @@ class CrawlingUtils:
             element.click()
             sleep(3)
         if style == 'input':
-            element.send_keys(string)
+            element.send_keys(text)
+
+    def execute_script(self, target):
+        self.driver.execute_script(target)
+        sleep(3)
 
     def get_html(self):
         return self.driver.page_source
@@ -41,6 +45,16 @@ class CrawlingUtils:
         save_path = os.path.join(self.path, f'{self.counter}.html')
         with open(save_path, 'w', encoding='utf-8') as f:
             f.write(page_source)
+
+    def save_html_plus_word_path(self, key):
+        page_source = self.get_html()
+
+        # HTMLをファイルに保存
+        save_path = os.path.join(self.path, key, f'{self.counter}.html')
+        with open(save_path, 'w', encoding='utf-8') as f:
+            f.write(page_source)
+
+
 
     def open_file(self, path):
         with open(path, 'r', encoding='utf-8') as f:

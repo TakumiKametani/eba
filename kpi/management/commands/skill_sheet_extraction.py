@@ -34,6 +34,7 @@ class Command(BaseCommand):
                     print(_file)
                     continue
             except:
+                print(path)
                 continue
             util.read(file)
             for data in util.df.iterrows():
@@ -79,7 +80,7 @@ class Command(BaseCommand):
                         break
 
         for name, skills in util.results.items():
-            data = [re.sub(r'K|JAVA|JS|PHP|N|F|inf|さん$', '', name)]
+            data = [re.sub(r'K|JAVA|JS|PHP|N|F|inf|さん|Ｃ#|WEB|インフラ|Python|lutter', '', name)]
             for target in util.header[1::]:
                 if target == '':
                     continue
