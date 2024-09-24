@@ -27,7 +27,7 @@ class CrawlingUtils:
             return element
         if style == 'click':
             element.click()
-            sleep(3)
+            sleep(4)
         if style == 'input':
             element.send_keys(text)
 
@@ -48,9 +48,11 @@ class CrawlingUtils:
 
     def save_html_plus_word_path(self, key):
         page_source = self.get_html()
-
+        key_path = os.path.join(self.path, key)
+        if not os.path.exists(key_path):
+            os.makedirs(key_path)
         # HTMLをファイルに保存
-        save_path = os.path.join(self.path, key, f'{self.counter}.html')
+        save_path = os.path.join(key_path, f'{self.counter}.html')
         with open(save_path, 'w', encoding='utf-8') as f:
             f.write(page_source)
 

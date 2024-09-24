@@ -11,8 +11,10 @@ class BeautifulUtils:
         self.path = os.path.join(settings.DATA_ROOT, site, target)
         self.site = site
         self.target = target
+        self.keys = []
         self.data = {}
         self.csv_data = []
+        self.summary_header = []
 
     def soup_util(self, file):
 
@@ -37,3 +39,13 @@ class BeautifulUtils:
         for i, chunk in enumerate(chunks):
             filename = f'{self.site}_{self.target}_{_yyyymmdd}_{i}.csv'
             chunk.to_csv(os.path.join(settings.DATA_ROOT, self.site, filename), index=False)
+
+    def do_write_xlsx(self, header):
+        now = datetime.now().date().strftime('%Y%m%d')
+        file_path = os.path.join(self.path, f'{self.site}_{now}.xlsx')
+        with pd.ExcelWriter(file_path) as writer:
+            df_summary = pd.DataFrame(self.data['summary'], columns=self.summary_header)
+            df_summary.to_excel(writer, sheet_name='集計', index=False)
+            for key in self.keys:
+                df = pd.DataFrame(self.data[key]['data'], columns=header)
+                df.to_excel(writer, sheet_name=key, index=False)
