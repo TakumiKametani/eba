@@ -42,8 +42,9 @@ class BeautifulUtils:
 
     def do_write_xlsx(self, header):
         now = datetime.now().date().strftime('%Y%m%d')
-        file_path = os.path.join(self.path, f'{self.site}_{now}.xlsx')
-        with pd.ExcelWriter(file_path) as writer:
+        filename = f'{self.site}_{now}.xlsx'
+        path = os.path.join(settings.DATA_ROOT, self.site, filename)
+        with pd.ExcelWriter(path) as writer:
             df_summary = pd.DataFrame(self.data['summary'], columns=self.summary_header)
             df_summary.to_excel(writer, sheet_name='集計', index=False)
             for key in self.keys:

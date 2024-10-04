@@ -2,10 +2,12 @@ import os
 import re
 from numpy import mean
 from time import sleep
+from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 from .utils.crawling_util import CrawlingUtils
 from .utils.beautiful_util import BeautifulUtils
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 
 from django.conf import settings
 
@@ -40,6 +42,8 @@ class Command(BaseCommand):
         self.create_header_target()
         util = CrawlingUtils if self.crawling else BeautifulUtils
         self.util = util(self.site, self.target)
+        if self.crawling:
+            self.util.remove_files()
         if 'startup' == self.site:
             self.startup()
         elif 'mynavi' == self.site:
@@ -65,16 +69,16 @@ class Command(BaseCommand):
         elif 'it_pro_partner_analysis' == self.site:
             self.it_pro_partner_analysis()
 
-
-
         elif 'open_work' == self.site:
             self.open_work()
         elif 'wantedly' == self.site:
             self.wantedly()
         elif 'willoftech' == self.site:
             self.willoftech()
-
-
+        elif 'weekly_check_submission' == self.site:
+            self.weekly_check_submission()
+        elif 'weekly_download' == self.site:
+            self.weekly_download()
 
         elif 'weekly_check' == self.site:
             if not self.crawling:
@@ -185,6 +189,19 @@ class Command(BaseCommand):
                 'index': {
                     'header': ['会社名', '詳細ページURL', '業態or業種', '所在地', '求める人材'],
                     'order': ['url', 'industry', 'location', 'talent']
+                },
+            },
+
+            'weekly_check_submission': {
+                'index': {
+                    'header': [],
+                    'order': []
+                },
+            },
+            'weekly_download': {
+                'index': {
+                    'header': [],
+                    'order': []
                 },
             },
 
@@ -629,7 +646,10 @@ class Command(BaseCommand):
             for filename in files:
                 print(filename)
                 soup = self.util.soup_util(os.path.join(self.util.path, filename))
-                corps = soup.find('div', id='contents').find_all('article')
+                try:
+                    corps = soup.find('div', id='contents').find_all('article')
+                except:
+                    continue
                 for corp in corps:
                     a_tag = corp.find('div', class_='jobListHeader').find('h4').find('a')
                     name = re.sub(r'\s|\t|\n', '', a_tag.get_text())
@@ -713,9 +733,16 @@ class Command(BaseCommand):
     def willoftech(self):
         if self.crawling:
             self.util.access('https://willof.jp/techcareer/engineer/search?page=1')
+            max_page = 500
+            try:
+                last = self.util.element(selector='//span[@class="volume"]', style='get')
+                last = int(last.text.replace(',', ''))
+                max_page = last // 10 + 1 if last % 10 else last // 10
+            except:
+                pass
             self.util.counter = 1
             self.util.save_html()
-            for i in range(1, 10000):
+            for i in range(1, max_page):
                 self.util.counter += 1
                 try:
                     self.util.element(selector='//ul[contains(@class, "c-list-paging")]/li[last()]/a', style='click')
@@ -980,7 +1007,7 @@ class Command(BaseCommand):
                 'アセンブラ': 'https://pe-bank.jp/project/assembler/',
                 'RPA': 'https://pe-bank.jp/project/rpa/',
                 'Scala': 'https://pe-bank.jp/project/scala/',
-                'golang': 'https://pe-bank.jp/project/golang/',
+                'Go': 'https://pe-bank.jp/project/golang/',
                 'COBOL': 'https://pe-bank.jp/project/cobol/',
                 '.NET(VB・C#)': 'https://pe-bank.jp/project/dotnet/',
                 'C言語': 'https://pe-bank.jp/project/clang/',
@@ -1023,7 +1050,7 @@ class Command(BaseCommand):
                 'PM', 'PMO', 'コンサルティング', 'Webディレクター', 'ITアーキテクト', 'DX',
                 'データベース', 'SQL', 'HTML5', 'テスト・検証', 'AI・機械学習', 'Shell(C・B・K)',
                 'Unity・Unreal Engine', 'ゲーム', 'ERP', 'IoT', 'アセンブラ',
-                'RPA', 'Scala', 'golang', 'COBOL', '.NET(VB・C#)', 'C言語', 'C++', 'VC++', 'Perl',
+                'RPA', 'Scala', 'Go', 'COBOL', '.NET(VB・C#)', 'C言語', 'C++', 'VC++', 'Perl',
                 'VB・VBA', 'Chef', 'Puppet', 'Ansible', 'SAP・Salesforce', 'その他言語', 'インフラ(その他)'
             ]
             for key in self.util.keys:
@@ -1224,9 +1251,13 @@ class Command(BaseCommand):
         if self.crawling:
             urls = {
                 'Java': 'https://itpropartners.com/job/engineer/java',
+                'JavaScript': 'https://itpropartners.com/job/engineer/javascript',
                 'PHP': 'https://itpropartners.com/job/engineer/php',
                 'Python': 'https://itpropartners.com/job/engineer/python',
                 'Ruby': 'https://itpropartners.com/job/engineer/ruby',
+                'Swift': 'https://itpropartners.com/job/engineer/swift',
+                'Kotlin': 'https://itpropartners.com/job/engineer/kotlin',
+                'C言語': 'https://itpropartners.com/job/engineer/c_lang',
                 'AWS': 'https://itpropartners.com/job/engineer/aws',
                 'TypeScript': 'https://itpropartners.com/job/engineer/typescript',
                 'React.js': 'https://itpropartners.com/job/engineer/reactjs',
@@ -1261,8 +1292,8 @@ class Command(BaseCommand):
             self.util.summary_header = ['言語', '案件数', '最大', '平均', '開発', 'PM']
             domain = 'https://itpropartners.com'
             self.util.keys = [
-                'Java', 'PHP', 'Python', 'Ruby',
-                'TypeScript', 'React.js', 'Vue.js', 'Go', 'AWS',
+                'Java', 'JavaScript', 'PHP', 'Python', 'Ruby',
+                'TypeScript', 'React.js', 'Vue.js', 'Go', 'Swift', 'Kotlin', 'C言語', 'AWS',
                 'フロントエンド', 'バックエンド', 'インフラ',
                 '機械学習', 'iOS', 'Android', 'データサイエンティスト',
                 'PM', 'PdM', 'SRE', 'マーケター', 'デザイナー',
@@ -1324,20 +1355,89 @@ class Command(BaseCommand):
             else:
                 pass
 
+    def weekly_download(self):
+        if self.crawling:
+            self.util.weekly_login()
+            now = datetime.now()
+            year = now.year
+            month = '{:02d}'.format(now.month)
+            year_month = f'{year}-{month}'
+            week = 4
+            from_year_month = '2024-03'
+            to_year_month = '2024-09'
+            noms = [285, 547, 548, 549]
+            for nom in noms:
+                self.util.counter += 1
+                url = f'https://eba-report.xyz/weekly_report?member_no={nom}&weekly_report_year_month={year_month}&weekly_report_week_num={week}&edit=&team_flg='
+                try:
+                    self.util.access(url)
+                    self.util.element(selector='//label[@for="terms_output"]', _type=By.XPATH, style='click')
+                    self.util.execute_script(f'document.getElementById("ym_from-text").value = "{from_year_month}"')
+                    self.util.execute_script(f'document.getElementById("ym_to-text").value = "{to_year_month}"')
+                    element = self.util.element(selector='//select[@name="csv_week_to"]', _type=By.XPATH, style='get')
+                    select = Select(element)
+                    select.select_by_value('6')
+                    self.util.element(selector='//input[@name="weekly_report_download"]', _type=By.XPATH, style='click')
+
+                except:
+                    print(url)
+                    continue
+        else:
+            for i in range(1, 100):
+                path = os.path.join(self.util.path, f'{i}.html')
+                if not os.path.exists(path):
+                    break
+                soup = self.util.soup_util(path)
+                name = re.sub(r'提出統計：|\s|\n', '', soup.find('section', class_='content-header').find('h1').get_text())
+                target = soup.find('ul', class_='nav nav-pills nav-stacked')
+                self.util.csv_data += [[name]]
+                self.util.csv_data += [[text] for text in re.sub(r'(\n)(\d)(\n)', r'\2\3', target.get_text().replace('\n', '', 1).replace('\n\n', '\n')).split('\n')]
+
+    def weekly_check_submission(self):
+        if self.crawling:
+            self.util.weekly_login()
+
+            start_year = 2024
+            end_year = 2024
+            start_month = 3
+            end_month = 9
+            noms = [283, 547, 548, 549]
+            for nom in noms:
+                self.util.counter += 1
+                url = f'https://eba-report.xyz/total_submission?start_year={start_year}&start_month={start_month}&start_week=1&end_year={end_year}&end_month={end_month}&end_week=6&member_no={nom}&search=%E6%A4%9C%E7%B4%A2'
+                try:
+                    self.util.access(url)
+                    self.util.save_html()
+                except:
+                    print(url)
+                    continue
+        else:
+            for i in range(1, 100):
+                path = os.path.join(self.util.path, f'{i}.html')
+                if not os.path.exists(path):
+                    break
+                soup = self.util.soup_util(path)
+                name = re.sub(r'提出統計：|\s|\n', '', soup.find('section', class_='content-header').find('h1').get_text())
+                target = soup.find('ul', class_='nav nav-pills nav-stacked')
+                self.util.csv_data += [[name]]
+                self.util.csv_data += [[text] for text in re.sub(r'(\n)(\d)(\n)', r'\2\3', target.get_text().replace('\n', '', 1).replace('\n\n', '\n')).split('\n')]
+
+
     def weekly_check(self):
         if self.crawling:
-            self.util.access('https://eba-report.xyz/subordinate_leader_list')
-            # OAuth認証があるから、一度止めてログインしてから、続きを流す。
-            a = 1
+            self.util.weekly_login()
+
             for i in [
                 # 幹部
-                20, 75, 126, 81, 99, 66, 84, 113, 207, 335, 244, 278, 262, 374, 261,
+                20, 75, 126, 81, 99, 66, 84, 207, 335, 244, 278, 262, 374, 261, 220,
                 # リーダー
                 107, 115, 118, 268, 85, 103, 165, 209, 242, 311, 356, 366, 480,
-                220, 228, 184, 282, 290, 406, 500, 450, 454, 351, 410, 481, 534, 91,
-                43, 61, 65, 90, 123, 127, 130, 140, 173, 187, 189,
+                228, 184, 282, 290, 406, 500, 450, 454, 351, 410, 481, 534, 479,
+                # この上の行に昇格したリーダーを追加していく運用
+                # 亀谷担当が下記になる
+                91, 43, 61, 65, 90, 123, 127, 130, 140, 173, 187, 189,
                 218, 236, 249, 251, 253, 260,
-                264, 285, 319, 409, 499,
+                264, 285, 319, 409, 499, 113,
                 # 研修担当
                 316, 653
             ]:

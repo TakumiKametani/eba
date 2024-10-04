@@ -1,4 +1,7 @@
+import base64
 import os
+import shutil
+import yaml
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,6 +16,27 @@ class CrawlingUtils:
         self.counter = 0
         if not os.path.exists(self.path):
             os.makedirs(self.path)
+
+    def remove_files(self):
+        shutil.rmtree(self.path)
+        os.makedirs(self.path)
+
+    def get_auth_header(self, user, password):
+        b64 = "Basic " + base64.b64encode('{}:{}'.format(user, password).encode('utf-8')).decode('utf-8')
+        return {"Authorization": b64}
+
+    def open_yaml(self):
+        with open(os.path.join(settings.BASE_DIR, 'pass.yaml'), 'r') as yml:
+            self.config = yaml.safe_load(yml)
+    def weekly_login(self):
+        self.open_yaml()
+        self.driver.execute_cdp_cmd("Network.enable", {})
+        self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders",
+                                         {"headers": self.get_auth_header(self.config['oauth']['name'], self.config['oauth']['pass'])})
+        self.access('https://eba-report.xyz/index')
+        self.element(selector='//input[@name="login_id"]', _type=By.XPATH, style='input', text=self.config['login']['name'])
+        self.element(selector='//input[@name="login_pass"]', _type=By.XPATH, style='input', text=self.config['login']['pass'])
+        self.element(selector='//button[@name="accept"]', _type=By.XPATH, style='click')
 
     def access(self, url):
         self.driver.get(url)
