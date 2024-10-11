@@ -34,14 +34,23 @@ class Command(BaseCommand):
             default='',
             help="",
         )
+        parser.add_argument(
+            "-p",
+            "--price",
+            action="store_true",
+            default=False,
+            help="",
+        )
+
 
     def handle(self, *args, **options):
         self.crawling = options.get('crawling', False)
         self.site = options.get('site', '')
         self.target = options.get('target', '')
+        self.price = options.get('price', False)
         self.create_header_target()
         util = CrawlingUtils if self.crawling else BeautifulUtils
-        self.util = util(self.site, self.target)
+        self.util = util(self.site, self.target, self.price)
         if self.crawling:
             self.util.remove_files()
         if 'startup' == self.site:
@@ -107,7 +116,8 @@ class Command(BaseCommand):
             'mynavi': {
                 'index': {
                     'header': ['会社名','詳細ページURL', '設立日', '所在地','従業員数','仕事内容'],
-                    'order': ['url', 'corp_start', 'location', 'employee', 'description']
+                    'order': ['url', 'corp_start', 'location', 'employee', 'description'],
+                    'price_header': ['会社名', '最低給与', '最大給与','詳細ページURL', '設立日', '所在地','従業員数','仕事内容'],
                 },
             },
             'tensyoku_ex': {
@@ -131,7 +141,8 @@ class Command(BaseCommand):
             'green': {
                 'index': {
                     'header': ['会社名', '詳細ページURL', '所在地', '求める人材'],
-                    'order': ['url', 'location', 'talent']
+                    'order': ['url', 'location', 'talent'],
+                    'price_header': ['会社名', '最低給与', '最大給与', '詳細ページURL', '所在地', '求める人材'],
                 },
             },
             'indeed': {
@@ -215,7 +226,7 @@ class Command(BaseCommand):
 
         }
         try:
-            self.header = self.header_order[self.site].get(self.target, {}).get('header', [])
+            self.header = self.header_order[self.site].get(self.target, {}).get('header' if not self.price else 'price_header', [])
             self.order = self.header_order[self.site].get(self.target, {}).get('order', [])
         except Exception as e:
             print(e)
@@ -333,44 +344,45 @@ class Command(BaseCommand):
                     break
             pass
         else:
-            url, corp_start, location, employee, description = [''] *5
             domain = 'https://tenshoku.mynavi.jp'
             files = os.listdir(self.util.path)
-            for filename in files:
-                print(filename)
-                soup = self.util.soup_util(os.path.join(self.util.path, filename))
-                corps = soup.find_all('section', class_='recruit')
-                for corp in corps:
-                    title_tag = corp.find('div', class_='recruit_head')
-                    name = re.sub(r'\s|\|.+', '', title_tag.find('p', class_='main_title').get_text())
-                    url = domain + title_tag.find('a').get('href')
-                    _description = corp.find('th', text='仕事内容')
-                    if _description:
-                        description = re.sub(r'\s|\t|\n', '', _description.parent.find('td').get_text())
-                    p_text = corp.find('p', class_='company_data').get_text().replace('企業データ', '').split('／')
-                    if len(p_text) == 2:
-                        if '設立：' in p_text[0]:
-                            corp_start = re.sub(r'設立：', '', p_text[0])
-                            employee = '-'
+            if not self.price:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find_all('section', class_='recruit')
+                    for corp in corps:
+                        name, url, corp_start, location, employee, description = self.util.mynavi_util(domain, corp)
+                        if name not in self.util.data:
+                            self.util.data[name] = {
+                                'url': url,
+                                'corp_start': corp_start,
+                                'location': location,
+                                'employee': employee,
+                                'description': description,
+                            }
                         else:
-                            corp_start = '-'
-                            employee = re.sub(r'従業員数：', '', p_text[0])
-                        location = re.sub(r'本社所在地：|\s|\t|\n', '', p_text[1])
-                    elif len(p_text) == 3:
-                        corp_start = re.sub(r'設立：', '', p_text[0])
-                        employee = re.sub(r'従業員数：', '', p_text[1])
-                        location = re.sub(r'本社所在地：|\s|\t|\n', '', p_text[2])
-                    if name not in self.util.data:
-                        self.util.data[name] = {
-                            'url': url,
-                            'corp_start': corp_start,
-                            'location': location,
-                            'employee': employee,
-                            'description': description,
-                        }
-                    else:
-                        self.util.data[name]['description'] += ' ' + description
-            self.util.csv_data = [[key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]], v[self.order[4]]] for key, v in self.util.data.items()]
+                            self.util.data[name]['description'] += ' ' + description
+                self.util.csv_data = [[key, v[self.order[0]], v[self.order[1]], v[self.order[2]], v[self.order[3]], v[self.order[4]]] for key, v in self.util.data.items()]
+            else:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find_all('section', class_='recruit')
+                    for corp in corps:
+                        name, url, corp_start, location, employee, description = self.util.mynavi_util(domain, corp)
+                        min_price, max_price = [''] * 2
+                        _price = corp.find('p', class_='fwb')
+                        if _price:
+                            try:
+                                _price = re.sub(r',|万円', '', _price.find('span').get_text()).split('～')
+                                min_price = int(_price[0] + '0000')
+                                max_price = int(_price[1] + '0000')
+                            except:
+                                pass
+
+                        self.util.csv_data += [[name, min_price, max_price, url, corp_start, location, employee, description]]
+
 
     def rikunabi(self):
         if self.crawling:
@@ -495,30 +507,45 @@ class Command(BaseCommand):
                 except:
                     break
         else:
-            url, location, talent = [''] * 3
             domain = 'https://www.green-japan.com'
             files = os.listdir(self.util.path)
-            for filename in files:
-                print(filename)
-                soup = self.util.soup_util(os.path.join(self.util.path, filename))
-                corps = soup.find('div', class_='css-1y5htl1').find_all('div', class_='MuiBox-root css-vfzywm')
-                for corp in corps:
-                    name = re.sub(r'\s|\t|\n', '', corp.find('div', class_='MuiTypography-root MuiTypography-subtitle2 css-k1ckjv').get_text())
-                    url = domain + corp.find('a').get('href', 'ERROR')
-                    location = corp.find('div', attrs={'aria-label': '勤務地'}).get_text()
-                    talent = corp.find('div', attrs={'aria-label': '募集職種'}).get_text()
-                    if name not in self.util.data:
-                        self.util.data[name] = {
-                            'url': url,
-                            'location': location,
-                            'talent': talent,
-                        }
-                    else:
-                        self.util.data[name]['talent'] += ' ' + talent
-            self.util.csv_data = [
-                [key, v[self.order[0]], v[self.order[1]], v[self.order[2]]] for
-                key, v in self.util.data.items()
-            ]
+            if not self.price:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find('div', class_='css-1y5htl1').find_all('div', class_='MuiBox-root css-vfzywm')
+                    for corp in corps:
+                        name, url, location, talent = self.util.green_util(domain, corp)
+                        if name not in self.util.data:
+                            self.util.data[name] = {
+                                'url': url,
+                                'location': location,
+                                'talent': talent,
+                            }
+                        else:
+                            self.util.data[name]['talent'] += ' ' + talent
+                self.util.csv_data = [
+                    [key, v[self.order[0]], v[self.order[1]], v[self.order[2]]] for
+                    key, v in self.util.data.items()
+                ]
+            else:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find('div', class_='css-1y5htl1').find_all('div', class_='MuiBox-root css-vfzywm')
+                    for corp in corps:
+                        name, url, location, talent = self.util.green_util(domain, corp)
+                        _price = corp.find('div', attrs={'aria-label': '想定年収'})
+                        min_price, max_price = [''] * 2
+                        if _price:
+                            try:
+                                price = _price.get_text().split('〜')
+                                min_price = int(price[0].replace('万円', '') + '0000')
+                                max_price = int(price[1].replace('万円', '') + '0000')
+                            except:
+                                pass
+                        self.util.csv_data += [[name, min_price, max_price, url, location, talent]]
+
 
     def indeed(self):
         if self.crawling:
@@ -1349,12 +1376,6 @@ class Command(BaseCommand):
                 ] for key in self.util.keys
             ]
 
-    def sample(self):
-            if self.crawling:
-                pass
-            else:
-                pass
-
     def weekly_download(self):
         if self.crawling:
             self.util.weekly_login()
@@ -1362,22 +1383,22 @@ class Command(BaseCommand):
             year = now.year
             month = '{:02d}'.format(now.month)
             year_month = f'{year}-{month}'
-            week = 4
-            from_year_month = '2024-03'
+            week = 1
+            from_year_month = '2024-04'
             to_year_month = '2024-09'
-            noms = [285, 547, 548, 549]
+            noms = self.util.config['weekly_target']
             for nom in noms:
                 self.util.counter += 1
                 url = f'https://eba-report.xyz/weekly_report?member_no={nom}&weekly_report_year_month={year_month}&weekly_report_week_num={week}&edit=&team_flg='
                 try:
                     self.util.access(url)
-                    self.util.element(selector='//label[@for="terms_output"]', _type=By.XPATH, style='click')
-                    self.util.execute_script(f'document.getElementById("ym_from-text").value = "{from_year_month}"')
-                    self.util.execute_script(f'document.getElementById("ym_to-text").value = "{to_year_month}"')
+                    self.util.element(selector='//label[@for="terms_output"]', _type=By.XPATH, style='click', non_sleep=True)
+                    self.util.execute_script(f'document.getElementsByName("csv_ym_from")[0].value = "{from_year_month}"')
+                    self.util.execute_script(f'document.getElementsByName("csv_ym_to")[0].value = "{to_year_month}"')
                     element = self.util.element(selector='//select[@name="csv_week_to"]', _type=By.XPATH, style='get')
                     select = Select(element)
                     select.select_by_value('6')
-                    self.util.element(selector='//input[@name="weekly_report_download"]', _type=By.XPATH, style='click')
+                    self.util.element(selector='//input[@name="weekly_report_download"]', _type=By.XPATH, style='click', non_sleep=True)
 
                 except:
                     print(url)
@@ -1399,9 +1420,9 @@ class Command(BaseCommand):
 
             start_year = 2024
             end_year = 2024
-            start_month = 3
+            start_month = 4
             end_month = 9
-            noms = [283, 547, 548, 549]
+            noms = self.util.config['weekly_target']
             for nom in noms:
                 self.util.counter += 1
                 url = f'https://eba-report.xyz/total_submission?start_year={start_year}&start_month={start_month}&start_week=1&end_year={end_year}&end_month={end_month}&end_week=6&member_no={nom}&search=%E6%A4%9C%E7%B4%A2'
@@ -1421,7 +1442,6 @@ class Command(BaseCommand):
                 target = soup.find('ul', class_='nav nav-pills nav-stacked')
                 self.util.csv_data += [[name]]
                 self.util.csv_data += [[text] for text in re.sub(r'(\n)(\d)(\n)', r'\2\3', target.get_text().replace('\n', '', 1).replace('\n\n', '\n')).split('\n')]
-
 
     def weekly_check(self):
         if self.crawling:
@@ -1463,9 +1483,12 @@ class Command(BaseCommand):
                         if h.get_text() not in ['ID', 'メンバー名']:
                             self.header += [re.sub(r'提出不要|保存のみ|\s|\t|\n', '', h.get_text()) + '未提出', 'OK', 'NG']
                 _bodys = soup.find_all('tbody')
+                if len(_bodys) <= 1:
+                    continue
                 name = re.sub(r'（自分）|\s|\t|\n', '', _bodys[0].find('td').get_text())
                 data = []
                 rows = []
+                print(path)
                 for tr in _bodys[1].find_all('tr'):
                     a_text = re.sub(r'\s|\t|\n', '', tr.find('a').get_text())
                     if name == '亀谷匠' and a_text in ['鈴木雄紀', '栗原なみ', '船木裕矢', '三橋優也', '栗山堅太郎', '品田彩光', '山崎省吾']:
@@ -1477,6 +1500,3 @@ class Command(BaseCommand):
                 for d in data:
                     result += [d.count('未提出'), d.count('OK'), d.count('NG')]
                 self.util.csv_data += [result]
-
-
-

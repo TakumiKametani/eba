@@ -130,6 +130,8 @@ DATA_ROOT = os.path.join(BASE_DIR, 'static', 'data')
 
 SKILL_SHEET = os.path.join(DATA_ROOT, 'skill_sheet')
 
+INVOICE_PATH = os.path.join(DATA_ROOT, 'invoice')
+
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = 'media/'

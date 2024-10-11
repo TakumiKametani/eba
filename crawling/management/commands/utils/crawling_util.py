@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from django.conf import settings
 
 class CrawlingUtils:
-    def __init__(self, site, target):
+    def __init__(self, site, target, price=False):
         self.driver = webdriver.Chrome()
         self.driver.maximize_window()
         self.path = os.path.join(settings.DATA_ROOT, site, target)
@@ -42,7 +42,7 @@ class CrawlingUtils:
         self.driver.get(url)
         sleep(5)
 
-    def element(self, selector='', _type='xpath', multi=False, target_num=0, style='get', text=''):
+    def element(self, selector='', _type='xpath', multi=False, target_num=0, style='get', text='', non_sleep=False):
         if multi:
             element = self.driver.find_elements(by=_type, value=selector)[target_num]
         else:
@@ -51,7 +51,8 @@ class CrawlingUtils:
             return element
         if style == 'click':
             element.click()
-            sleep(4)
+            if not non_sleep:
+                sleep(4)
         if style == 'input':
             element.send_keys(text)
 
@@ -79,8 +80,6 @@ class CrawlingUtils:
         save_path = os.path.join(key_path, f'{self.counter}.html')
         with open(save_path, 'w', encoding='utf-8') as f:
             f.write(page_source)
-
-
 
     def open_file(self, path):
         with open(path, 'r', encoding='utf-8') as f:
