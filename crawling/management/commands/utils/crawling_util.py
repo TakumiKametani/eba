@@ -26,7 +26,7 @@ class CrawlingUtils:
         return {"Authorization": b64}
 
     def open_yaml(self):
-        with open(os.path.join(settings.BASE_DIR, 'pass.yaml'), 'r') as yml:
+        with open(os.path.join(settings.BASE_DIR, 'pass.yaml'), 'r', encoding='utf_8') as yml:
             self.config = yaml.safe_load(yml)
     def weekly_login(self):
         self.open_yaml()

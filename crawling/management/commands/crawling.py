@@ -84,8 +84,11 @@ class Command(BaseCommand):
             self.wantedly()
         elif 'willoftech' == self.site:
             self.willoftech()
+        elif 'weekly_first_assign_date' == self.site:
+            self.weekly_first_assign_date()
         elif 'weekly_check_submission' == self.site:
             self.weekly_check_submission()
+
         elif 'weekly_download' == self.site:
             self.weekly_download()
 
@@ -203,12 +206,19 @@ class Command(BaseCommand):
                 },
             },
 
+            'weekly_first_assign_date': {
+                'index': {
+                    'header': [],
+                    'order': []
+                },
+            },
             'weekly_check_submission': {
                 'index': {
                     'header': [],
                     'order': []
                 },
             },
+
             'weekly_download': {
                 'index': {
                     'header': [],
@@ -574,41 +584,58 @@ class Command(BaseCommand):
                     except:
                         break
         else:
-            url, location, talent = [''] * 3
             domain = 'https://jp.indeed.com'
             files = os.listdir(self.util.path)
-            for filename in files:
-                print(filename)
-                soup = self.util.soup_util(os.path.join(self.util.path, filename))
-                corps = soup.find('div', class_='mosaic mosaic-provider-jobcards mosaic-provider-hydrated').find('ul').find_all('li')
-                for corp in corps:
-                    name = corp.find('span', attrs={'data-testid': 'company-name'})
-                    if not name:
-                        continue
-                    name = re.sub(r'\s|\t|\n', '', name.get_text())
-                    url = domain + corp.find('a').get('href', 'ERROR')
-                    try:
-                        location = re.sub(r'\s|\t|\n', '', corp.find('div', attrs={'data-testid': 'text-location'}).get_text())
-                    except:
-                        location = re.sub(r'\s|\t|\n', '', corp.find('div', attrs={'data-testid': 'icon-location'}).get_text())
-                    try:
-                        talent = re.sub(r'\s|\t|\n', '', corp.find('div', class_='underShelfFooter').get_text())
-                    except:
-                        talent = ''
-
-                    if name not in self.util.data:
-                        self.util.data[name] = {
-                            'url': url,
-                            'location': location,
-                            'talent': talent,
-                        }
-                    else:
-                        if talent:
-                            self.util.data[name]['talent'] += ' ' + talent
-            self.util.csv_data = [
-                [key, v[self.order[0]], v[self.order[1]], v[self.order[2]]] for
-                key, v in self.util.data.items()
-            ]
+            if not self.price:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find('div', class_='mosaic mosaic-provider-jobcards mosaic-provider-hydrated').find('ul').find_all('li')
+                    for corp in corps:
+                        name, url, location, talent = self.util.indeed_util(domain, corp)
+                        if not name:
+                            continue
+                        if name not in self.util.data:
+                            self.util.data[name] = {
+                                'url': url,
+                                'location': location,
+                                'talent': talent,
+                            }
+                        else:
+                            if talent:
+                                self.util.data[name]['talent'] += ' ' + talent
+                self.util.csv_data = [
+                    [key, v[self.order[0]], v[self.order[1]], v[self.order[2]]] for
+                    key, v in self.util.data.items()
+                ]
+            else:
+                for filename in files:
+                    print(filename)
+                    soup = self.util.soup_util(os.path.join(self.util.path, filename))
+                    corps = soup.find('div', class_='mosaic mosaic-provider-jobcards mosaic-provider-hydrated').find(
+                        'ul').find_all('li')
+                    for corp in corps:
+                        name, url, location, talent = self.util.indeed_util(domain, corp)
+                        if not name:
+                            continue
+                        _price = corp.find('div', attrs={'data-testid': 'attribute_snippet_testid'})
+                        min_price, max_price = [''] * 2
+                        if _price:
+                            try:
+                                price = re.sub(r'\s|,|', '', _price.get_text()).split('~')
+                                plus = '0000' if '.' not in price[0] else '000'
+                                plus = '' if '万円' not in price[0] else plus
+                                if '月給' in price[0]:
+                                    min_price = int(re.sub(r'月給|以上|万円|円|\.', '', price[0]) + plus) * 12
+                                    max_price = int(re.sub(r'以上|万円|円|\.', '', price[1]) + plus) * 12
+                                elif '年俸' in price[0] or '年収' in price[0]:
+                                    min_price = int(re.sub(r'年俸|年収|万円|\.', '', price[0]) + plus)
+                                    max_price = int(re.sub(r'以上|万円|\.', '', price[1]) + plus)
+                            except:
+                                pass
+                        if '' == min_price == max_price:
+                            continue
+                        self.util.csv_data += [[name, min_price, max_price, url, location, talent]]
 
     def levtech_career(self):
         if self.crawling:
@@ -1384,8 +1411,8 @@ class Command(BaseCommand):
             month = '{:02d}'.format(now.month)
             year_month = f'{year}-{month}'
             week = 1
-            from_year_month = '2024-04'
-            to_year_month = '2024-09'
+            from_year_month = '2024-05'
+            to_year_month = '2024-10'
             noms = self.util.config['weekly_target']
             for nom in noms:
                 self.util.counter += 1
@@ -1398,7 +1425,7 @@ class Command(BaseCommand):
                     element = self.util.element(selector='//select[@name="csv_week_to"]', _type=By.XPATH, style='get')
                     select = Select(element)
                     select.select_by_value('6')
-                    self.util.element(selector='//input[@name="weekly_report_download"]', _type=By.XPATH, style='click', non_sleep=True)
+                    self.util.element(selector='//input[@name="weekly_report_download"]', _type=By.XPATH, style='click')
 
                 except:
                     print(url)
@@ -1442,6 +1469,35 @@ class Command(BaseCommand):
                 target = soup.find('ul', class_='nav nav-pills nav-stacked')
                 self.util.csv_data += [[name]]
                 self.util.csv_data += [[text] for text in re.sub(r'(\n)(\d)(\n)', r'\2\3', target.get_text().replace('\n', '', 1).replace('\n\n', '\n')).split('\n')]
+
+    def weekly_first_assign_date(self):
+        if self.crawling:
+            self.util.weekly_login()
+
+            noms = self.util.config['weekly_target']
+            for nom in noms:
+                self.util.counter += 1
+                url = f'https://eba-report.xyz/member_detail?target_member_no={nom}'
+                try:
+                    self.util.access(url)
+                    self.util.save_html()
+                except:
+                    print(url)
+                    continue
+        else:
+            for i in range(1, 1000):
+                number, target_date = [''] * 2
+                path = os.path.join(self.util.path, f'{i}.html')
+                if not os.path.exists(path):
+                    break
+                soup = self.util.soup_util(path)
+                try:
+                    trs = soup.find('table', class_='basic-info-table').find('tbody').find_all('tr')
+                    number = re.sub(r'\s|\n|\t', '', trs[0].find_all('td')[0].get_text())
+                    target_date = re.sub(r'\s|\n|\t', '', trs[4].find_all('td')[1].get_text())
+                except:
+                    pass
+                self.util.csv_data += [[number, target_date]]
 
     def weekly_check(self):
         if self.crawling:

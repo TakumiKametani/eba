@@ -85,3 +85,20 @@ class BeautifulUtils:
         location = corp.find('div', attrs={'aria-label': '勤務地'}).get_text()
         talent = corp.find('div', attrs={'aria-label': '募集職種'}).get_text()
         return name, url, location, talent
+
+    def indeed_util(self, domain, corp):
+        url, location, talent = [''] * 3
+        name = corp.find('span', attrs={'data-testid': 'company-name'})
+        if not name:
+            return name, url, location, talent
+        name = re.sub(r'\s|\t|\n', '', name.get_text())
+        url = domain + corp.find('a').get('href', 'ERROR')
+        try:
+            location = re.sub(r'\s|\t|\n', '', corp.find('div', attrs={'data-testid': 'text-location'}).get_text())
+        except:
+            location = re.sub(r'\s|\t|\n', '', corp.find('div', attrs={'data-testid': 'icon-location'}).get_text())
+        try:
+            talent = re.sub(r'\s|\t|\n', '', corp.find('div', class_='underShelfFooter').get_text())
+        except:
+            talent = ''
+        return name, url, location, talent
