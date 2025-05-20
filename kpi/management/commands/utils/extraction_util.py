@@ -86,10 +86,10 @@ class InvoiceExtractionUtil:
         path = os.path.join(self.in_path, '社員マスタ.csv')
         with open(path, 'r', encoding='utf-8-sig') as f:
             self.data = {
-                row.replace('\n', '').split(',')[0]: {
+                row.replace('\n', '').split(',')[1]: {
                     'company': '',
                     'counter': 0,
-                    'no': int(row.replace('\n', '').split(',')[1]),
+                    'no': int(row.replace('\n', '').split(',')[0]),
                     'display': ''
                 } for row in f.readlines()
             }

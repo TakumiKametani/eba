@@ -2,6 +2,7 @@ import csv
 import os
 import re
 import requests
+import yaml
 import pandas as pd
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -17,10 +18,15 @@ class BeautifulUtils:
         self.csv_data = []
         self.summary_header = []
         self.price = price
+        self.open_yaml()
 
     def soup_util(self, file):
 
         return BeautifulSoup(open(file, encoding="utf-8"), 'html.parser')
+
+    def open_yaml(self):
+        with open(os.path.join(settings.BASE_DIR, 'pass.yaml'), 'r', encoding='utf_8') as yml:
+            self.config = yaml.safe_load(yml)
 
     def do_write_csv(self, header, data):
         _yyyymmdd = datetime.strftime(datetime.now(), '%Y%m%d')

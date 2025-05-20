@@ -341,18 +341,25 @@ class Command(BaseCommand):
 
     def mynavi(self):
         if self.crawling:
-            self.util.access('https://tenshoku.mynavi.jp/shutoken/list/p11+p12+p13+p14/o16+o1G1+o1G225/?ags=0')
-            self.util.counter = 1
-            self.util.save_html()
-            for i in range(1, 10000):
+
+            urls = [
+                'https://tenshoku.mynavi.jp/shutoken/list/p11+p12+p13+p14/o16+o1G1+o1G225/kw%E4%B8%8D%E5%8B%95%E7%94%A3/?ags=0',
+                'https://tenshoku.mynavi.jp/shutoken/list/p11+p12+p13+p14/o16+o1G1+o1G225/kw%E3%83%91%E3%83%81%E3%83%B3%E3%82%B3/?ags=0',
+                'https://tenshoku.mynavi.jp/shutoken/list/p11+p12+p13+p14/o16+o1G1+o1G225/kw%E9%81%8A%E6%88%AF/?ags=0'
+            ]
+            for url in urls:
+                self.util.access(url)
                 self.util.counter += 1
-                try:
-                    self.util.element(selector='//li[@class="pager_item pager_next"]/a', _type=By.XPATH, style='click')
-                    self.util.save_html()
-                except:
-                    print(self.util.counter)
-                    break
-            pass
+                self.util.save_html()
+                for i in range(1, 10000):
+                    self.util.counter += 1
+                    try:
+                        self.util.element(selector='//li[@class="pager_item pager_next"]/a', _type=By.XPATH, style='click')
+                        self.util.save_html()
+                    except:
+                        print(self.util.counter)
+                        break
+                pass
         else:
             domain = 'https://tenshoku.mynavi.jp'
             files = os.listdir(self.util.path)
@@ -401,14 +408,61 @@ class Command(BaseCommand):
             self.util.execute_script('document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(4) > label").click()')
             self.util.execute_script('document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(3) > label").click()')
             self.util.execute_script('document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div.searchModalFooter > div.searchModalFooter__right > div.searchModalFooter__btn.searchModalFooter__btn--primary").click()')
+            self.util.execute_script('document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__textBoxWrap > input").value = "パチンコ"')
+            self.util.execute_script('document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__button.js-addFreeWord").click()')
             self.util.execute_script('document.querySelector("#js-searchPanel > div.rn3-floatingBottom.js-floatingBottom > div > div.rn3-floatingBottom__button > button").click()')
 
-            self.util.counter = 1
+            self.util.counter += 1
             self.util.save_html()
             for i in range(1, 10000):
                 self.util.counter += 1
                 try:
                     self.util.execute_script('document.querySelector("body > div.rnn-wrapper.js-rnnWrapper > div.rnn-mainContentsBack.rnn-resultSearch > div > div.rnn-row.rnn-row--gutter-xm > div.rnn-col-9.rnn-group.rnn-group--xm.js-resultSearch.rnn-col-offset-3 > div.rnn-group.rnn-group--xm > div.rnn-group.rnn-group--xs > div > ul > li.rnn-pagination__next > a").click()')
+                    self.util.save_html()
+                except:
+                    break
+            self.util.access('https://next.rikunabi.com/search/')
+            self.util.execute_script(
+                'document.getElementsByClassName("rn3-selectBody__button js-searchModalOpen")[0].click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(4) > label").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(3) > label").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div.searchModalFooter > div.searchModalFooter__right > div.searchModalFooter__btn.searchModalFooter__btn--primary").click()')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__textBoxWrap > input").value = "不動産"')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__button.js-addFreeWord").click()')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-floatingBottom.js-floatingBottom > div > div.rn3-floatingBottom__button > button").click()')
+            for i in range(1, 10000):
+                self.util.counter += 1
+                try:
+                    self.util.execute_script('document.querySelector("body > div.rnn-wrapper.js-rnnWrapper > div.rnn-mainContentsBack.rnn-resultSearch > div > div.rnn-row.rnn-row--gutter-xm > div.rnn-col-9.rnn-group.rnn-group--xm.js-resultSearch.rnn-col-offset-3 > div.rnn-group.rnn-group--xm > div.rnn-group.rnn-group--xs > div > ul > li.rnn-pagination__next > a").click()')
+                    self.util.save_html()
+                except:
+                    break
+            self.util.access('https://next.rikunabi.com/search/')
+            self.util.execute_script(
+                'document.getElementsByClassName("rn3-selectBody__button js-searchModalOpen")[0].click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(4) > label").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div:nth-child(2) > ul > li:nth-child(3) > label").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div:nth-child(12) > div.modal > div.modalWrapper > div > div.searchModal > div.searchModalFooter > div.searchModalFooter__right > div.searchModalFooter__btn.searchModalFooter__btn--primary").click()')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__textBoxWrap > input").value = "遊戯"')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-searchPanel__inner > div.rn3-searchPanelBody > ul:nth-child(3) > li > table > tbody > tr > td > div.rn3-freeWordSelect > div > div.rn3-freeWordSelect__button.js-addFreeWord").click()')
+            self.util.execute_script(
+                'document.querySelector("#js-searchPanel > div.rn3-floatingBottom.js-floatingBottom > div > div.rn3-floatingBottom__button > button").click()')
+            for i in range(1, 10000):
+                self.util.counter += 1
+                try:
+                    self.util.execute_script(
+                        'document.querySelector("body > div.rnn-wrapper.js-rnnWrapper > div.rnn-mainContentsBack.rnn-resultSearch > div > div.rnn-row.rnn-row--gutter-xm > div.rnn-col-9.rnn-group.rnn-group--xm.js-resultSearch.rnn-col-offset-3 > div.rnn-group.rnn-group--xm > div.rnn-group.rnn-group--xs > div > ul > li.rnn-pagination__next > a").click()')
                     self.util.save_html()
                 except:
                     break
@@ -447,7 +501,8 @@ class Command(BaseCommand):
 
     def en_japan(self):
         if self.crawling:
-            self.util.access('https://employment.en-japan.com/search/search_list/?occupation=351000_351500_400000')
+            # self.util.access('https://employment.en-japan.com/search/search_list/?occupation=351000_351500_400000')
+            self.util.access('https://employment.en-japan.com/search/search_list/?occupation=351000_351500_400000&areaid=2&industry=1950_1990_2930&aroute=1')
             self.util.counter = 1
             self.util.save_html()
             for i in range(1, 10000):
@@ -492,9 +547,21 @@ class Command(BaseCommand):
     def green(self):
         if self.crawling:
             self.util.access('https://www.green-japan.com/search')
-            self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input', text='エンジニア')
+            # self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input', text='エンジニア')
+            self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input', text='パチンコ')
+            self.util.execute_script('document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > div:nth-child(3)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div:nth-child(2) > div.MuiButtonBase-root.MuiAccordionSummary-root.MuiAccordionSummary-gutters.css-1iji0d4").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(1)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(2)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(3)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(4)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(5)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(6)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(7)").click()')
+            self.util.execute_script('document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogActions-root.MuiDialogActions-spacing.css-nd13u3 > button.MuiButtonBase-root.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.css-67wnbg").click()')
+            self.util.execute_script('document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > button").click()')
             self.util.element(selector='//*[@id="__next"]/header/div[3]/div[2]/div[2]/form/div/button', _type=By.XPATH, style='click')
-            self.util.counter = 1
+            self.util.counter += 1
             self.util.save_html()
             for i in range(1, 10000):
                 self.util.counter += 1
@@ -505,17 +572,91 @@ class Command(BaseCommand):
                     break
             self.util.access('https://www.green-japan.com/search')
             self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input',
-                              text='デザイン')
+                              text='遊戯')
+            self.util.execute_script(
+                'document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > div:nth-child(3)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div:nth-child(2) > div.MuiButtonBase-root.MuiAccordionSummary-root.MuiAccordionSummary-gutters.css-1iji0d4").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(1)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(2)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(3)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(4)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(5)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(6)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(7)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogActions-root.MuiDialogActions-spacing.css-nd13u3 > button.MuiButtonBase-root.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.css-67wnbg").click()')
+            self.util.execute_script(
+                'document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > button").click()')
             self.util.element(selector='//*[@id="__next"]/header/div[3]/div[2]/div[2]/form/div/button', _type=By.XPATH,
                               style='click')
+            self.util.counter += 1
             self.util.save_html()
             for i in range(1, 10000):
                 self.util.counter += 1
                 try:
-                    self.util.element(selector='//*[local-name()="svg" and @data-testid="NavigateNextIcon"]', _type=By.XPATH, style='click')
+                    self.util.element(selector='//*[local-name()="svg" and @data-testid="NavigateNextIcon"]',
+                                      _type=By.XPATH, style='click')
                     self.util.save_html()
                 except:
                     break
+            self.util.access('https://www.green-japan.com/search')
+            self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input',
+                              text='不動産')
+            self.util.execute_script(
+                'document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > div:nth-child(3)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div:nth-child(2) > div.MuiButtonBase-root.MuiAccordionSummary-root.MuiAccordionSummary-gutters.css-1iji0d4").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(1)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(2)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(3)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(4)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(5)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(6)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogContent-root.MuiDialogContent-dividers.css-8952es > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAccordion-root.Mui-expanded.MuiAccordion-gutters.css-mhkwsw > div.MuiCollapse-root.MuiCollapse-vertical.MuiCollapse-entered.css-c4sutr > div > div > div > div > ul > label:nth-child(7)").click()')
+            self.util.execute_script(
+                'document.querySelector("body > div.MuiDialog-root.MuiModal-root.css-126xj0f > div.MuiDialog-container.MuiDialog-scrollPaper.css-ekeie0 > div > div.MuiDialogActions-root.MuiDialogActions-spacing.css-nd13u3 > button.MuiButtonBase-root.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.MuiButton-root.jss1.MuiButton-contained.MuiButton-containedPrimary.MuiButton-sizeMedium.MuiButton-containedSizeMedium.MuiButton-disableElevation.css-67wnbg").click()')
+            self.util.execute_script(
+                'document.querySelector("#__next > header > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiAppBar-root.MuiAppBar-colorInherit.MuiAppBar-positionFixed.mui-fixed.css-1rs46jh > div.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-1dinjk9 > div.MuiBox-root.css-1s26z8e > form > div > button").click()')
+            self.util.element(selector='//*[@id="__next"]/header/div[3]/div[2]/div[2]/form/div/button', _type=By.XPATH,
+                              style='click')
+            self.util.counter += 1
+            self.util.save_html()
+            for i in range(1, 10000):
+                self.util.counter += 1
+                try:
+                    self.util.element(selector='//*[local-name()="svg" and @data-testid="NavigateNextIcon"]',
+                                      _type=By.XPATH, style='click')
+                    self.util.save_html()
+                except:
+                    break
+            # self.util.access('https://www.green-japan.com/search')
+            # self.util.element(selector='//input[@data-testid="SearchFormInput"]', _type=By.XPATH, style='input',
+            #                   text='デザイン')
+            # self.util.element(selector='//*[@id="__next"]/header/div[3]/div[2]/div[2]/form/div/button', _type=By.XPATH,
+            #                   style='click')
+            # self.util.save_html()
+            # for i in range(1, 10000):
+            #     self.util.counter += 1
+            #     try:
+            #         self.util.element(selector='//*[local-name()="svg" and @data-testid="NavigateNextIcon"]', _type=By.XPATH, style='click')
+            #         self.util.save_html()
+            #     except:
+            #         break
         else:
             domain = 'https://www.green-japan.com'
             files = os.listdir(self.util.path)
@@ -566,7 +707,7 @@ class Command(BaseCommand):
             ]
             for url in urls:
                 self.util.access(url)
-                self.util.counter = 1
+                self.util.counter += 1
                 self.util.save_html()
                 for i in range(1, 10000):
                     self.util.counter += 1
@@ -971,7 +1112,7 @@ class Command(BaseCommand):
                 for filename in files:
                     print(filename)
                     soup = self.util.soup_util(os.path.join(path, filename))
-                    corps = soup.find_all('li', class_='projectCard')
+                    corps = soup.find_all('div', class_='projectCard')
                     for corp in corps:
                         self.util.data[key]['counter'] += 1
                         name = re.sub(r'\s|\t|\n', '', corp.find('h3', class_='nameGroup').get_text())
@@ -1411,8 +1552,8 @@ class Command(BaseCommand):
             month = '{:02d}'.format(now.month)
             year_month = f'{year}-{month}'
             week = 1
-            from_year_month = '2024-05'
-            to_year_month = '2024-10'
+            from_year_month = '2024-07'
+            to_year_month = '2024-12'
             noms = self.util.config['weekly_target']
             for nom in noms:
                 self.util.counter += 1
@@ -1447,8 +1588,8 @@ class Command(BaseCommand):
 
             start_year = 2024
             end_year = 2024
-            start_month = 4
-            end_month = 9
+            start_month = 7
+            end_month = 12
             noms = self.util.config['weekly_target']
             for nom in noms:
                 self.util.counter += 1
@@ -1505,15 +1646,15 @@ class Command(BaseCommand):
 
             for i in [
                 # 幹部
-                20, 75, 126, 81, 99, 66, 84, 207, 335, 244, 278, 262, 374, 261, 220,
-                # リーダー
-                107, 115, 118, 268, 85, 103, 165, 209, 242, 311, 356, 366, 480,
-                228, 184, 282, 290, 406, 500, 450, 454, 351, 410, 481, 534, 479,
+                20, 75, 126, 81, 99, 66, 84, 207, 335, 244, 278, 262, 374, 261, 220, 319, 311,
+                # リーダー　浅井→吉田
+                107, 115, 118, 375, 85, 103, 165, 209, 242, 356, 366, 480,
+                228, 184, 282, 290, 406, 500, 450, 454, 351, 410, 481, 534, 479, 556, 521, 322, 576,
                 # この上の行に昇格したリーダーを追加していく運用
                 # 亀谷担当が下記になる
                 91, 43, 61, 65, 90, 123, 127, 130, 140, 173, 187, 189,
                 218, 236, 249, 251, 253, 260,
-                264, 285, 319, 409, 499, 113,
+                264, 285, 409, 499, 113,
                 # 研修担当
                 316, 653
             ]:
@@ -1547,7 +1688,7 @@ class Command(BaseCommand):
                 print(path)
                 for tr in _bodys[1].find_all('tr'):
                     a_text = re.sub(r'\s|\t|\n', '', tr.find('a').get_text())
-                    if name == '亀谷匠' and a_text in ['鈴木雄紀', '栗原なみ', '船木裕矢', '三橋優也', '栗山堅太郎', '品田彩光', '山崎省吾']:
+                    if name == self.util.config['myname'] and a_text in self.util.config['weekly_check_throw']:
                         continue
                     rows += [[re.sub(r'\s|\t|\n|（.+）', '', td.get_text()) for td in tr.find_all('td') if 'OK' in td.get_text() or 'NG' in td.get_text() or '未提出' in td.get_text()]]
                 for i in range(0, len(rows[0])):
